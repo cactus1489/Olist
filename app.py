@@ -7,9 +7,8 @@ import os
 # 페이지 설정
 st.set_page_config(page_title="Olist 배송 지연 분석 대시보드", layout="wide")
 
-# 데이터 경로 설정
-BASE_PATH = r'c:\Users\dlstj\OneDrive\Desktop\ICB6\miniProject'
-METRICS_PATH = r'c:\Users\dlstj\OneDrive\Desktop\ICB6\naver_api_mini_project\data'
+# 경로 설정 (상대 경로 적용: 로컬 및 배포 서버 공용)
+BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
 @st.cache_data
 def load_raw_data():

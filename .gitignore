@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+.env
+
+# Data
+# data/  # 데이터 폴더를 제외하고 싶다면 주석을 해제하세요
+
+# IDE
+.vscode/
+.idea/

@@ -1,16 +1,18 @@
 import pandas as pd
 import os
 
-BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_PATH = os.path.join(PROJECT_ROOT, 'data')
+REPORTS_PATH = os.path.join(PROJECT_ROOT, 'reports')
 
 def analyze_top_revenue_photos():
     # 데이터 로드
     try:
-        products = pd.read_parquet(os.path.join(BASE_PATH, 'olist_products_dataset.parquet'))
-        order_items = pd.read_parquet(os.path.join(BASE_PATH, 'olist_order_items_dataset.parquet'))
+        products = pd.read_parquet(os.path.join(DATA_PATH, 'olist_products_dataset.parquet'))
+        order_items = pd.read_parquet(os.path.join(DATA_PATH, 'olist_order_items_dataset.parquet'))
     except:
-        products = pd.read_csv(os.path.join(BASE_PATH, 'olist_products_dataset.csv'))
-        order_items = pd.read_csv(os.path.join(BASE_PATH, 'olist_order_items_dataset.csv'))
+        products = pd.read_csv(os.path.join(DATA_PATH, 'olist_products_dataset.csv'))
+        order_items = pd.read_csv(os.path.join(DATA_PATH, 'olist_order_items_dataset.csv'))
 
     # 데이터 병합 (주문 건별 -> 상품 정보)
     df = pd.merge(order_items, products[['product_id', 'product_category_name', 'product_photos_qty']], on='product_id')
@@ -37,7 +39,7 @@ def analyze_top_revenue_photos():
     
     product_stats['Photo Group'] = product_stats['photos_qty'].apply(group_photos)
 
-    with open('analysis_top_revenue_photos.txt', 'w', encoding='utf-8') as f:
+    with open(os.path.join(REPORTS_PATH, 'analysis_top_revenue_photos.txt'), 'w', encoding='utf-8') as f:
         f.write("="*80 + "\n")
         f.write("🔍 매출 상위 상품들의 사진 개수 분석 (Fact Check)\n")
         f.write("="*80 + "\n\n")

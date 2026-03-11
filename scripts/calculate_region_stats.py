@@ -1,17 +1,17 @@
 import pandas as pd
 import os
 
-# 데이터 경로 설정
-base_path = r'c:\Users\dlstj\OneDrive\Desktop\ICB6\miniProject'
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_PATH = os.path.join(PROJECT_ROOT, 'data')
 
 print("데이터 로딩 중...")
 # 데이터 로드 (Parquet 파일이 있으면 Parquet을 우선 사용)
 try:
-    orders = pd.read_parquet(os.path.join(base_path, 'olist_orders_dataset.parquet'))
-    customers = pd.read_parquet(os.path.join(base_path, 'olist_customers_dataset.parquet'))
+    orders = pd.read_parquet(os.path.join(DATA_PATH, 'olist_orders_dataset.parquet'))
+    customers = pd.read_parquet(os.path.join(DATA_PATH, 'olist_customers_dataset.parquet'))
 except:
-    orders = pd.read_csv(os.path.join(base_path, 'olist_orders_dataset.csv'))
-    customers = pd.read_csv(os.path.join(base_path, 'olist_customers_dataset.csv'))
+    orders = pd.read_csv(os.path.join(DATA_PATH, 'olist_orders_dataset.csv'))
+    customers = pd.read_csv(os.path.join(DATA_PATH, 'olist_customers_dataset.csv'))
 
 # 날짜 컬럼 변환
 date_columns = [

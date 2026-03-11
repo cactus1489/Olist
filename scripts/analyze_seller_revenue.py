@@ -1,15 +1,17 @@
 import pandas as pd
 import os
 
-BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_PATH = os.path.join(PROJECT_ROOT, 'data')
+REPORTS_PATH = os.path.join(PROJECT_ROOT, 'reports')
 
 # 데이터 로드
 try:
-    orders = pd.read_parquet(os.path.join(BASE_PATH, 'olist_orders_dataset.parquet'))
-    order_items = pd.read_parquet(os.path.join(BASE_PATH, 'olist_order_items_dataset.parquet'))
+    orders = pd.read_parquet(os.path.join(DATA_PATH, 'olist_orders_dataset.parquet'))
+    order_items = pd.read_parquet(os.path.join(DATA_PATH, 'olist_order_items_dataset.parquet'))
 except:
-    orders = pd.read_csv(os.path.join(BASE_PATH, 'olist_orders_dataset.csv'))
-    order_items = pd.read_csv(os.path.join(BASE_PATH, 'olist_order_items_dataset.csv'))
+    orders = pd.read_csv(os.path.join(DATA_PATH, 'olist_orders_dataset.csv'))
+    order_items = pd.read_csv(os.path.join(DATA_PATH, 'olist_order_items_dataset.csv'))
 
 orders['order_purchase_timestamp'] = pd.to_datetime(orders['order_purchase_timestamp'])
 
@@ -36,7 +38,7 @@ monthly_stats['avg_revenue_per_seller'] = monthly_stats['total_revenue'] / month
 monthly_stats['avg_revenue_per_order'] = monthly_stats['total_revenue'] / monthly_stats['total_orders']
 
 # 결과를 파일로 저장
-with open('analysis_result.txt', 'w', encoding='utf-8') as f:
+with open(os.path.join(REPORTS_PATH, 'analysis_result.txt'), 'w', encoding='utf-8') as f:
     f.write("=" * 100 + "\n")
     f.write("월별 판매자 수 vs 매출 추이 분석\n")
     f.write("=" * 100 + "\n")

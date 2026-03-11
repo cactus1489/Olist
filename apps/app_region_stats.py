@@ -9,7 +9,8 @@ import json
 import numpy as np
 
 # 경로 설정
-BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_PATH = os.path.join(PROJECT_ROOT, 'data')
 
 @st.cache_data
 def get_brazil_geojson():
@@ -25,13 +26,13 @@ def get_brazil_geojson():
 def load_and_process_data():
     # 데이터 로드
     try:
-        orders = pd.read_parquet(os.path.join(BASE_PATH, 'olist_orders_dataset.parquet'))
-        customers = pd.read_parquet(os.path.join(BASE_PATH, 'olist_customers_dataset.parquet'))
-        order_items = pd.read_parquet(os.path.join(BASE_PATH, 'olist_order_items_dataset.parquet'))
+        orders = pd.read_parquet(os.path.join(DATA_PATH, 'olist_orders_dataset.parquet'))
+        customers = pd.read_parquet(os.path.join(DATA_PATH, 'olist_customers_dataset.parquet'))
+        order_items = pd.read_parquet(os.path.join(DATA_PATH, 'olist_order_items_dataset.parquet'))
     except:
-        orders = pd.read_csv(os.path.join(BASE_PATH, 'olist_orders_dataset.csv'))
-        customers = pd.read_csv(os.path.join(BASE_PATH, 'olist_customers_dataset.csv'))
-        order_items = pd.read_csv(os.path.join(BASE_PATH, 'olist_order_items_dataset.csv'))
+        orders = pd.read_csv(os.path.join(DATA_PATH, 'olist_orders_dataset.csv'))
+        customers = pd.read_csv(os.path.join(DATA_PATH, 'olist_customers_dataset.csv'))
+        order_items = pd.read_csv(os.path.join(DATA_PATH, 'olist_order_items_dataset.csv'))
 
     # 날짜 컬럼 변환
     date_columns = ['order_purchase_timestamp', 'order_delivered_customer_date', 'order_estimated_delivery_date']
@@ -113,19 +114,19 @@ def load_and_process_data():
 def load_product_data():
     """상품 데이터 로드 및 처리"""
     try:
-        products = pd.read_parquet(os.path.join(BASE_PATH, 'olist_products_dataset.parquet'))
+        products = pd.read_parquet(os.path.join(DATA_PATH, 'olist_products_dataset.parquet'))
     except:
-        products = pd.read_csv(os.path.join(BASE_PATH, 'olist_products_dataset.csv'))
+        products = pd.read_csv(os.path.join(DATA_PATH, 'olist_products_dataset.csv'))
     
     try:
-        order_items = pd.read_parquet(os.path.join(BASE_PATH, 'olist_order_items_dataset.parquet'))
+        order_items = pd.read_parquet(os.path.join(DATA_PATH, 'olist_order_items_dataset.parquet'))
     except:
-        order_items = pd.read_csv(os.path.join(BASE_PATH, 'olist_order_items_dataset.csv'))
+        order_items = pd.read_csv(os.path.join(DATA_PATH, 'olist_order_items_dataset.csv'))
     
     try:
-        orders = pd.read_parquet(os.path.join(BASE_PATH, 'olist_orders_dataset.parquet'))
+        orders = pd.read_parquet(os.path.join(DATA_PATH, 'olist_orders_dataset.parquet'))
     except:
-        orders = pd.read_csv(os.path.join(BASE_PATH, 'olist_orders_dataset.csv'))
+        orders = pd.read_csv(os.path.join(DATA_PATH, 'olist_orders_dataset.csv'))
     
     orders['order_purchase_timestamp'] = pd.to_datetime(orders['order_purchase_timestamp'])
     
@@ -139,20 +140,20 @@ def load_product_data():
 def load_seller_data():
     """판매자 데이터 로드 및 처리"""
     try:
-        sellers = pd.read_csv(os.path.join(BASE_PATH, 'olist_sellers_dataset.csv'))
+        sellers = pd.read_csv(os.path.join(DATA_PATH, 'olist_sellers_dataset.csv'))
     except:
         st.error("판매자 데이터를 찾을 수 없습니다.")
         return None, None
     
     try:
-        order_items = pd.read_parquet(os.path.join(BASE_PATH, 'olist_order_items_dataset.parquet'))
+        order_items = pd.read_parquet(os.path.join(DATA_PATH, 'olist_order_items_dataset.parquet'))
     except:
-        order_items = pd.read_csv(os.path.join(BASE_PATH, 'olist_order_items_dataset.csv'))
+        order_items = pd.read_csv(os.path.join(DATA_PATH, 'olist_order_items_dataset.csv'))
     
     try:
-        orders = pd.read_parquet(os.path.join(BASE_PATH, 'olist_orders_dataset.parquet'))
+        orders = pd.read_parquet(os.path.join(DATA_PATH, 'olist_orders_dataset.parquet'))
     except:
-        orders = pd.read_csv(os.path.join(BASE_PATH, 'olist_orders_dataset.csv'))
+        orders = pd.read_csv(os.path.join(DATA_PATH, 'olist_orders_dataset.csv'))
     
     orders['order_purchase_timestamp'] = pd.to_datetime(orders['order_purchase_timestamp'])
     
@@ -1329,16 +1330,16 @@ def render_revenue_drop_analysis_tab():
     @st.cache_data
     def load_reviews():
         try:
-            return pd.read_parquet(os.path.join(BASE_PATH, 'olist_order_reviews_dataset.parquet'))
+            return pd.read_parquet(os.path.join(DATA_PATH, 'olist_order_reviews_dataset.parquet'))
         except:
-            return pd.read_csv(os.path.join(BASE_PATH, 'olist_order_reviews_dataset.csv'))
+            return pd.read_csv(os.path.join(DATA_PATH, 'olist_order_reviews_dataset.csv'))
             
     @st.cache_data
     def load_products_mini():
         try:
-            return pd.read_parquet(os.path.join(BASE_PATH, 'olist_products_dataset.parquet'))
+            return pd.read_parquet(os.path.join(DATA_PATH, 'olist_products_dataset.parquet'))
         except:
-            return pd.read_csv(os.path.join(BASE_PATH, 'olist_products_dataset.csv'))
+            return pd.read_csv(os.path.join(DATA_PATH, 'olist_products_dataset.csv'))
 
     reviews = load_reviews()
     products = load_products_mini()
@@ -1860,9 +1861,9 @@ def render_seller_detail_tab():
     def get_seller_detailed_stats(_df):
         # 리뷰 데이터 로드
         try:
-            reviews = pd.read_parquet(os.path.join(BASE_PATH, 'olist_order_reviews_dataset.parquet'))
+            reviews = pd.read_parquet(os.path.join(DATA_PATH, 'olist_order_reviews_dataset.parquet'))
         except:
-            reviews = pd.read_csv(os.path.join(BASE_PATH, 'olist_order_reviews_dataset.csv'))
+            reviews = pd.read_csv(os.path.join(DATA_PATH, 'olist_order_reviews_dataset.csv'))
             
         _df = pd.merge(_df, reviews[['order_id', 'review_score']], on='order_id', how='left')
         _df['date'] = _df['order_purchase_timestamp'].dt.date

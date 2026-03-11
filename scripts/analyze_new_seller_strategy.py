@@ -1,17 +1,19 @@
 import pandas as pd
 import os
 
-BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_PATH = os.path.join(PROJECT_ROOT, 'data')
+REPORTS_PATH = os.path.join(PROJECT_ROOT, 'reports')
 
 def load_data():
     try:
-        orders = pd.read_parquet(os.path.join(BASE_PATH, 'olist_orders_dataset.parquet'))
-        order_items = pd.read_parquet(os.path.join(BASE_PATH, 'olist_order_items_dataset.parquet'))
-        products = pd.read_parquet(os.path.join(BASE_PATH, 'olist_products_dataset.parquet'))
-        reviews = pd.read_parquet(os.path.join(BASE_PATH, 'olist_order_reviews_dataset.parquet'))
+        orders = pd.read_parquet(os.path.join(DATA_PATH, 'olist_orders_dataset.parquet'))
+        order_items = pd.read_parquet(os.path.join(DATA_PATH, 'olist_order_items_dataset.parquet'))
+        products = pd.read_parquet(os.path.join(DATA_PATH, 'olist_products_dataset.parquet'))
+        reviews = pd.read_parquet(os.path.join(DATA_PATH, 'olist_order_reviews_dataset.parquet'))
     except:
-        orders = pd.read_csv(os.path.join(BASE_PATH, 'olist_orders_dataset.csv'))
-        order_items = pd.read_csv(os.path.join(BASE_PATH, 'olist_order_items_dataset.csv'))
+        orders = pd.read_csv(os.path.join(DATA_PATH, 'olist_orders_dataset.csv'))
+        order_items = pd.read_csv(os.path.join(DATA_PATH, 'olist_order_items_dataset.csv'))
         products = pd.read_csv(os.path.join(BASE_PATH, 'olist_products_dataset.csv'))
         reviews = pd.read_csv(os.path.join(BASE_PATH, 'olist_order_reviews_dataset.csv'))
 
@@ -35,7 +37,7 @@ def analyze_new_seller_behavior():
     df_2018 = df[df['order_purchase_timestamp'].dt.year == 2018].copy()
     df_2018 = pd.merge(df_2018, seller_first_sale[['seller_id', 'Seller Type']], on='seller_id')
     
-    with open('analysis_new_seller_strategy.txt', 'w', encoding='utf-8') as f:
+    with open(os.path.join(REPORTS_PATH, 'analysis_new_seller_strategy.txt'), 'w', encoding='utf-8') as f:
         f.write("="*80 + "\n")
         f.write("🔍 신규 판매자(2018년 진입)의 저가 판매 전략 분석\n")
         f.write("="*80 + "\n\n")

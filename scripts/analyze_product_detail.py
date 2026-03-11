@@ -1,17 +1,19 @@
 import pandas as pd
 import os
 
-BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_PATH = os.path.join(PROJECT_ROOT, 'data')
+REPORTS_PATH = os.path.join(PROJECT_ROOT, 'reports')
 
 def analyze_product_quality():
     try:
-        orders = pd.read_parquet(os.path.join(BASE_PATH, 'olist_orders_dataset.parquet'))
-        order_items = pd.read_parquet(os.path.join(BASE_PATH, 'olist_order_items_dataset.parquet'))
-        products = pd.read_parquet(os.path.join(BASE_PATH, 'olist_products_dataset.parquet'))
+        orders = pd.read_parquet(os.path.join(DATA_PATH, 'olist_orders_dataset.parquet'))
+        order_items = pd.read_parquet(os.path.join(DATA_PATH, 'olist_order_items_dataset.parquet'))
+        products = pd.read_parquet(os.path.join(DATA_PATH, 'olist_products_dataset.parquet'))
     except:
         # csv fallback은 생략
-        orders = pd.read_csv(os.path.join(BASE_PATH, 'olist_orders_dataset.csv'))
-        order_items = pd.read_csv(os.path.join(BASE_PATH, 'olist_order_items_dataset.csv'))
+        orders = pd.read_csv(os.path.join(DATA_PATH, 'olist_orders_dataset.csv'))
+        order_items = pd.read_csv(os.path.join(DATA_PATH, 'olist_order_items_dataset.csv'))
         products = pd.read_csv(os.path.join(BASE_PATH, 'olist_products_dataset.csv'))
 
     orders['order_purchase_timestamp'] = pd.to_datetime(orders['order_purchase_timestamp'])
@@ -45,7 +47,7 @@ def analyze_product_quality():
         item_count=('order_item_id', 'count')
     ).reset_index()
 
-    with open('analysis_product_detail.txt', 'w', encoding='utf-8') as f:
+    with open(os.path.join(REPORTS_PATH, 'analysis_product_detail.txt'), 'w', encoding='utf-8') as f:
         f.write("="*80 + "\n")
         f.write("🔍 신규 판매자의 상품 상세 정보(품질) 분석 (뷰티 vs IT)\n")
         f.write("="*80 + "\n\n")

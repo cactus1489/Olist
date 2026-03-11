@@ -2,15 +2,17 @@ import pandas as pd
 import os
 import numpy as np
 
-BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_PATH = os.path.join(PROJECT_ROOT, 'data')
+REPORTS_PATH = os.path.join(PROJECT_ROOT, 'reports')
 
 def load_data():
     try:
-        orders = pd.read_parquet(os.path.join(BASE_PATH, 'olist_orders_dataset.parquet'))
-        order_items = pd.read_parquet(os.path.join(BASE_PATH, 'olist_order_items_dataset.parquet'))
+        orders = pd.read_parquet(os.path.join(DATA_PATH, 'olist_orders_dataset.parquet'))
+        order_items = pd.read_parquet(os.path.join(DATA_PATH, 'olist_order_items_dataset.parquet'))
     except:
-        orders = pd.read_csv(os.path.join(BASE_PATH, 'olist_orders_dataset.csv'))
-        order_items = pd.read_csv(os.path.join(BASE_PATH, 'olist_order_items_dataset.csv'))
+        orders = pd.read_csv(os.path.join(DATA_PATH, 'olist_orders_dataset.csv'))
+        order_items = pd.read_csv(os.path.join(DATA_PATH, 'olist_order_items_dataset.csv'))
     
     orders['order_purchase_timestamp'] = pd.to_datetime(orders['order_purchase_timestamp'])
     return orders, order_items
@@ -28,7 +30,7 @@ def analyze_reasons():
     # 2018년 데이터만 집중 분석 (트렌드 변화 구간)
     df_2018 = delivered[delivered['order_purchase_timestamp'].dt.year == 2018].copy()
     
-    with open('analysis_reasons.txt', 'w', encoding='utf-8') as f:
+    with open(os.path.join(REPORTS_PATH, 'analysis_reasons.txt'), 'w', encoding='utf-8') as f:
         f.write("="*80 + "\n")
         f.write("🔍 판매자당 매출 하락 원인 심층 분석 (2018년 기준)\n")
         f.write("="*80 + "\n\n")

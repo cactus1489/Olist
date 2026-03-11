@@ -1,21 +1,19 @@
 import pandas as pd
 import os
 
-# 데이터 경로 설정
-base_path = r'c:\Users\dlstj\OneDrive\Desktop\ICB6\miniProject'
-output_path = r'c:\Users\dlstj\OneDrive\Desktop\ICB6\naver_api_mini_project\data'
-
-if not os.path.exists(output_path):
-    os.makedirs(output_path)
+# 데이터 및 출력 경로 설정
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_PATH = os.path.join(PROJECT_ROOT, 'data')
+REPORTS_PATH = os.path.join(PROJECT_ROOT, 'reports')
 
 print("데이터 로딩 중...")
 # 데이터 로드
-orders = pd.read_csv(os.path.join(base_path, 'olist_orders_dataset.csv'))
-order_items = pd.read_csv(os.path.join(base_path, 'olist_order_items_dataset.csv'))
-products = pd.read_csv(os.path.join(base_path, 'olist_products_dataset.csv'))
-customers = pd.read_csv(os.path.join(base_path, 'olist_customers_dataset.csv'))
-payments = pd.read_csv(os.path.join(base_path, 'olist_order_payments_dataset.csv'))
-sellers = pd.read_csv(os.path.join(base_path, 'olist_sellers_dataset.csv'))
+orders = pd.read_csv(os.path.join(DATA_PATH, 'olist_orders_dataset.csv'))
+order_items = pd.read_csv(os.path.join(DATA_PATH, 'olist_order_items_dataset.csv'))
+products = pd.read_csv(os.path.join(DATA_PATH, 'olist_products_dataset.csv'))
+customers = pd.read_csv(os.path.join(DATA_PATH, 'olist_customers_dataset.csv'))
+payments = pd.read_csv(os.path.join(DATA_PATH, 'olist_order_payments_dataset.csv'))
+sellers = pd.read_csv(os.path.join(DATA_PATH, 'olist_sellers_dataset.csv'))
 
 # 날짜 컬럼 변환
 date_columns = [
@@ -64,19 +62,19 @@ def aggregate_metrics(group_cols):
 print("지역별 지표 산출 중...")
 # 1. 지역별 (customer_state)
 state_metrics = aggregate_metrics(['customer_state'])
-state_metrics.to_csv(os.path.join(output_path, 'metrics_by_state.csv'), index=False, encoding='utf-8-sig')
+state_metrics.to_csv(os.path.join(REPORTS_PATH, 'metrics_by_state.csv'), index=False, encoding='utf-8-sig')
 
 print("판매자별 지표 산출 중...")
 # 2. 판매자별 (seller_id)
 # olist_order_items_dataset에 seller_id가 들어있음
 seller_metrics = aggregate_metrics(['seller_id'])
-seller_metrics.to_csv(os.path.join(output_path, 'metrics_by_seller.csv'), index=False, encoding='utf-8-sig')
+seller_metrics.to_csv(os.path.join(REPORTS_PATH, 'metrics_by_seller.csv'), index=False, encoding='utf-8-sig')
 
 print("상품 카테고리별 지표 산출 중...")
 # 3. 상품 카테고리별 (product_category_name)
 category_metrics = aggregate_metrics(['product_category_name'])
-category_metrics.to_csv(os.path.join(output_path, 'metrics_by_category.csv'), index=False, encoding='utf-8-sig')
+category_metrics.to_csv(os.path.join(REPORTS_PATH, 'metrics_by_category.csv'), index=False, encoding='utf-8-sig')
 
-print(f"분석 완료! 결과가 {output_path} 디렉토리에 저장되었습니다.")
+print(f"분석 완료! 결과가 {REPORTS_PATH} 디렉토리에 저장되었습니다.")
 print("\n--- 지역별 상위 5개 결과 ---")
 print(state_metrics.sort_values(by='success_delayed_cnt', ascending=False).head())

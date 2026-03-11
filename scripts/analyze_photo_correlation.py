@@ -1,17 +1,19 @@
 import pandas as pd
 import os
 
-BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_PATH = os.path.join(PROJECT_ROOT, 'data')
+REPORTS_PATH = os.path.join(PROJECT_ROOT, 'reports')
 
 def analyze_photo_review_correlation():
     # 데이터 로드
     try:
-        products = pd.read_parquet(os.path.join(BASE_PATH, 'olist_products_dataset.parquet'))
-        order_items = pd.read_parquet(os.path.join(BASE_PATH, 'olist_order_items_dataset.parquet'))
-        reviews = pd.read_parquet(os.path.join(BASE_PATH, 'olist_order_reviews_dataset.parquet'))
+        products = pd.read_parquet(os.path.join(DATA_PATH, 'olist_products_dataset.parquet'))
+        order_items = pd.read_parquet(os.path.join(DATA_PATH, 'olist_order_items_dataset.parquet'))
+        reviews = pd.read_parquet(os.path.join(DATA_PATH, 'olist_order_reviews_dataset.parquet'))
     except:
-        products = pd.read_csv(os.path.join(BASE_PATH, 'olist_products_dataset.csv'))
-        order_items = pd.read_csv(os.path.join(BASE_PATH, 'olist_order_items_dataset.csv'))
+        products = pd.read_csv(os.path.join(DATA_PATH, 'olist_products_dataset.csv'))
+        order_items = pd.read_csv(os.path.join(DATA_PATH, 'olist_order_items_dataset.csv'))
         reviews = pd.read_csv(os.path.join(BASE_PATH, 'olist_order_reviews_dataset.csv'))
 
     # 데이터 병합
@@ -43,7 +45,7 @@ def analyze_photo_review_correlation():
     # 상관계수 계산 (원래 수치 사용)
     correlations = df_target.groupby('Category')[['product_photos_qty', 'review_score']].corr().iloc[0::2, -1]
 
-    with open('analysis_photo_correlation.txt', 'w', encoding='utf-8') as f:
+    with open(os.path.join(REPORTS_PATH, 'analysis_photo_correlation.txt'), 'w', encoding='utf-8') as f:
         f.write("="*80 + "\n")
         f.write("🔍 사진 개수와 고객 만족도(평점)의 상관관계 분석\n")
         f.write("="*80 + "\n\n")

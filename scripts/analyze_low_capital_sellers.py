@@ -1,17 +1,19 @@
 import pandas as pd
 import os
 
-BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_PATH = os.path.join(PROJECT_ROOT, 'data')
+REPORTS_PATH = os.path.join(PROJECT_ROOT, 'reports')
 
 def analyze_low_capital_sellers():
     # 데이터 로드
     try:
-        orders = pd.read_parquet(os.path.join(BASE_PATH, 'olist_orders_dataset.parquet'))
-        order_items = pd.read_parquet(os.path.join(BASE_PATH, 'olist_order_items_dataset.parquet'))
-        products = pd.read_parquet(os.path.join(BASE_PATH, 'olist_products_dataset.parquet'))
+        orders = pd.read_parquet(os.path.join(DATA_PATH, 'olist_orders_dataset.parquet'))
+        order_items = pd.read_parquet(os.path.join(DATA_PATH, 'olist_order_items_dataset.parquet'))
+        products = pd.read_parquet(os.path.join(DATA_PATH, 'olist_products_dataset.parquet'))
     except:
-        orders = pd.read_csv(os.path.join(BASE_PATH, 'olist_orders_dataset.csv'))
-        order_items = pd.read_csv(os.path.join(BASE_PATH, 'olist_order_items_dataset.csv'))
+        orders = pd.read_csv(os.path.join(DATA_PATH, 'olist_orders_dataset.csv'))
+        order_items = pd.read_csv(os.path.join(DATA_PATH, 'olist_order_items_dataset.csv'))
         products = pd.read_csv(os.path.join(BASE_PATH, 'olist_products_dataset.csv'))
 
     orders['order_purchase_timestamp'] = pd.to_datetime(orders['order_purchase_timestamp'])
@@ -75,7 +77,7 @@ def analyze_low_capital_sellers():
     top_cats = new_sellers_df['product_category_name'].value_counts().head(10).index
     cat_prices = new_sellers_df[new_sellers_df['product_category_name'].isin(top_cats)].groupby('product_category_name')['price'].mean().sort_values()
 
-    with open('analysis_low_capital_proof.txt', 'w', encoding='utf-8') as f:
+    with open(os.path.join(REPORTS_PATH, 'analysis_low_capital_proof.txt'), 'w', encoding='utf-8') as f:
         f.write("="*80 + "\n")
         f.write("🔍 [논리적 증명] 신규 판매자의 50% 이상이 '소자본/저가' 판매자인가?\n")
         f.write("="*80 + "\n\n")

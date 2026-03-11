@@ -149,6 +149,21 @@ def render_step2(df, seller_profile):
         fig2.update_yaxes(title="단건 판매 집단 비중 (%)", range=[0, 100])
         fig2.update_layout(height=400)
         st.plotly_chart(fig2, use_container_width=True)
+        
+        # 추가: 단건 판매 비중 상세 데이터 표
+        with st.expander("📂 월별 단건 판매 비중 상세 데이터 보기"):
+            df_single_show = single_monthly[['가입월', 'total_new', 'single_sale', 'single_ratio']].copy()
+            df_single_show.columns = ['가입월', '신규 유입', '단건 판매자', '비중 (%)']
+            df_single_show['가입월'] = df_single_show['가입월'].astype(str)
+            st.dataframe(
+                df_single_show.style.format({
+                    '신규 유입': '{:,}',
+                    '단건 판매자': '{:,}',
+                    '비중 (%)': '{:.1f}%'
+                }).background_gradient(subset=['비중 (%)'], cmap='YlOrRd'),
+                use_container_width=True
+            )
+
         st.markdown("**현상**: 신규 가입자 10명 중 약 4~5명(40~50% 내외)은 **가입 첫 달에 단 1건만 팔고 맙니다.**")
 
     # 3) 신규 vs 기존 판매자 비율 상세 표 추가

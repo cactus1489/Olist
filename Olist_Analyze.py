@@ -251,6 +251,55 @@ def render_step3(df, seller_profile):
     
     st.success("🔥 **분석 결론 (Sweet Spot)**: 표를 보면, M1에 **딱 1건만 팔았을 때의 생존율은 약 34%**에 불과하나, **2건을 팔면 56%**, **3건 이상부터는 60% 후반대로 생존율이 수직 상승**함을 알 수 있습니다. 즉, 한 달 간 최소 **2~3건 이상(N=3)** 팔게 만드는 것이 장기 생존의 열쇠입니다.")
 
+    # --- 추가: 리텐션 코호트 분석 섹션 ---
+    st.divider()
+    st.subheader("📊 데이터적 근거: 코호트 리텐션 매트릭스 (180일 보정)")
+    st.markdown(
+        "위에서 정의한 '180일(6개월) 생존'이라는 기준이 왜 타당한지 코호트 분석으로 증명합니다. "
+        "가입 시점(동기 집단)이 같은 판매자들이 월별로 얼마나 재활동하는지 추적해 보면, 리텐션이 평탄화(Plateau)되는 지점을 알 수 있습니다."
+    )
+
+    with st.spinner("코호트 리텐션 매트릭스 계산 중..."):
+        # 코호트 분석을 위한 데이터 준비 (유효 모수 대상)
+        df_cohort = df_valid[['seller_id', 'order_purchase_timestamp', '최초 판매일']].copy()
+        df_cohort['OrderMonth'] = df_cohort['order_purchase_timestamp'].dt.to_period('M')
+        df_cohort['CohortMonth'] = df_cohort['최초 판매일'].dt.to_period('M')
+        
+        # 코호트 인덱스 계산 (경과 월)
+        order_year = df_cohort['OrderMonth'].dt.year
+        order_month = df_cohort['OrderMonth'].dt.month
+        cohort_year = df_cohort['CohortMonth'].dt.year
+        cohort_month = df_cohort['CohortMonth'].dt.month
+        
+        df_cohort['CohortIndex'] = (order_year - cohort_year) * 12 + (order_month - cohort_month) + 1
+        
+        # 매트릭스 생성
+        cohort_counts = df_cohort.groupby(['CohortMonth', 'CohortIndex'])['seller_id'].nunique().unstack(fill_value=0)
+        
+        # 첫 달 대비 비율 산출
+        cohort_sizes = cohort_counts.iloc[:, 0]
+        retention = cohort_counts.divide(cohort_sizes, axis=0) * 100
+        
+        # 표시 최적화 (12개월까지, 문자열 인덱스)
+        retention.index = retention.index.astype(str)
+        max_cols = min(12, len(retention.columns))
+        retention_display = retention.iloc[:, :max_cols].round(1)
+
+    st.markdown("##### 📝 가입 월별 코호트의 개월 차 재활동 유지율 (%)")
+    st.dataframe(
+        retention_display.style.background_gradient(cmap='Blues', axis=None, vmin=0, vmax=100)
+                              .format("{:.1f}%", na_rep="")
+                              .highlight_null(color='white'),
+        use_container_width=True,
+        height=400
+    )
+    
+    st.info(
+        "💡 **차트 해석**: 가입 초기(Index 1~3)에는 리텐션이 급격히 낮아지지만, **Index 6(6개월 차)** 전후를 기점으로 "
+        "유지율 하락이 멈추고 일정 수준으로 안정화되는 양상을 보입니다. 이는 180일(6개월)을 버틴 판매자가 "
+        "플랫폼의 안정적인 '장기 파트너'로 정착했음을 시각적으로 증명합니다."
+    )
+
 def render_step4():
     st.header("4. 액션 플랜 (결론 플랫폼 정책 제언)")
     st.markdown("분석를 바탕으로, 매출 정체 파훼를 위한 '스위트스팟 도달(M1 내 3건 이상 판매)' 집중 육성 액션 플랜을 제안합니다.")

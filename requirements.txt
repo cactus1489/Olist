@@ -5,3 +5,4 @@ pyarrow
 fastparquet
 numpy
 requests
+matplotlib

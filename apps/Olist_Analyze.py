@@ -3,8 +3,11 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import sys
 import os
 import numpy as np
+# 현재 디렉토리(apps/)를 Python Path에 추가하여 형제 모듈 임포트 가능하게 함
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # 기존 파일에서 데이터 로더 함수 재사용
 from app_region_stats import load_seller_data, load_and_process_data

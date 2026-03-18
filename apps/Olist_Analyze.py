@@ -23,6 +23,9 @@ def main():
         items_with_sellers, _ = load_seller_data()
         df = items_with_sellers[items_with_sellers['order_status'] == 'delivered'].copy()
         
+        # 2018년 8월 31일 이전의 데이터만 유지 (마지막 달 데이터 절단 및 이탈 왜곡 방지)
+        df = df[df['order_purchase_timestamp'] <= '2018-08-31'].copy()
+        
         # 기준일(집계 마감일) 계산
         max_date = df['order_purchase_timestamp'].max()
         
@@ -96,6 +99,20 @@ def render_step1(df):
     
     st.plotly_chart(fig, use_container_width=True)
     
+    # 추가: 월별 상세 데이터 표
+    with st.expander("📊 월별 상세 데이터 확인하기"):
+        df_step1_show = monthly_stats[['주문월', 'active_sellers', 'revenue']].copy()
+        df_step1_show.columns = ['주문월', '활성 판매자 수(명)', '매출액 (R$)']
+        df_step1_show['주문월'] = df_step1_show['주문월'].astype(str)
+        st.dataframe(
+            df_step1_show.style.format({
+                '활성 판매자 수(명)': '{:,}',
+                '매출액 (R$)': '{:,.0f}'
+            }).background_gradient(subset=['매출액 (R$)'], cmap='Reds')
+              .background_gradient(subset=['활성 판매자 수(명)'], cmap='Blues'),
+            use_container_width=True
+        )
+
     st.error("💡 **인사이트**: 2018년 들어 활성 판매자 수(파란 막대)는 계속 우상향하고 있으나, 동기간 총 매출액(빨간 선) 상승률은 눈에 띄게 둔화되어 있습니다. 판매자 규모 확대가 실제 매출 볼륨으로 이어지지 않는 본질적인 병목이 존재합니다.")
 
 def render_step2(df, seller_profile):
@@ -105,27 +122,61 @@ def render_step2(df, seller_profile):
         "신규 판매자 중 가입 초기(첫 달)에 단 1건만 팔고 관둬버리는 **'단건 판매자' 비율**을 추적했습니다."
     )
     
-    # 1) 이탈자 트렌드 분석
-    # 이번 달에 더이상 거래가 없고 마지막 거래인 사람을 '이탈'로 간주 (단순화: 해당 월이 마지막 판매일인 사람)
-    churn_monthly = seller_profile.groupby(seller_profile['마지막 판매일'].dt.to_period('M'))['seller_id'].count().reset_index()
-    churn_monthly.columns = ['월', '이탈자 수']
+    # --- 데이터 통합 계산 (그래프 및 표 공용) ---
+    # 월별 신규/기존/총 활성 집계
+    monthly_type = df.groupby(['주문월', 'seller_id', '가입월']).size().reset_index()
+    monthly_type['is_new'] = monthly_type['주문월'] == monthly_type['가입월']
     
-    new_monthly = seller_profile.groupby('가입월')['seller_id'].count().reset_index()
-    new_monthly.columns = ['월', '신규 유입자 수']
+    summary_stats = monthly_type.groupby('주문월').agg(
+        총_활성_판매자=('seller_id', 'nunique'),
+        신규_판매자=('is_new', 'sum'),
+        기존_판매자=('is_new', lambda x: (~x).sum())
+    ).reset_index()
     
-    trend_df = pd.merge(new_monthly, churn_monthly, on='월', how='outer').fillna(0).sort_values('월')
-    trend_df['월_dt'] = trend_df['월'].dt.to_timestamp()
+    # 월별 이탈자 집계
+    seller_last_month = seller_profile[['seller_id', '마지막 판매일']].copy()
+    seller_last_month['마지막_거래월'] = seller_last_month['마지막 판매일'].dt.to_period('M')
+    
+    active_with_last = pd.merge(monthly_type[['주문월', 'seller_id']], seller_last_month, on='seller_id', how='left')
+    active_with_last['is_churned'] = active_with_last['주문월'] == active_with_last['마지막_거래월']
+    
+    churn_counts = active_with_last.groupby('주문월').agg(
+        이탈자=('is_churned', 'sum')
+    ).reset_index()
+    
+    # 병합 및 필터링
+    trend_df = pd.merge(summary_stats, churn_counts, on='주문월')
+    trend_df['월_dt'] = trend_df['주문월'].dt.to_timestamp()
     trend_df = trend_df[(trend_df['월_dt'] >= '2017-01-01') & (trend_df['월_dt'] <= '2018-08-31')]
-    
+    # ------------------------------------------
+
     col1, col2 = st.columns(2)
     with col1:
-        st.subheader("📉 유입 대비 이탈자 트렌드")
+        st.subheader("📉 신규 유입 vs 이탈자 추이")
         fig1 = go.Figure()
-        fig1.add_trace(go.Bar(x=trend_df['월_dt'], y=trend_df['신규 유입자 수'], name="신규 유입자", marker_color='#81C784'))
-        fig1.add_trace(go.Scatter(x=trend_df['월_dt'], y=trend_df['이탈자 수'], name="이탈자(마지막 판매)", line=dict(color='#E53935', width=3, dash='dot')))
-        fig1.update_layout(barmode='overlay', hovermode="x unified", height=400)
+        # 신규 유입 (Bar)
+        fig1.add_trace(go.Bar(
+            x=trend_df['월_dt'], 
+            y=trend_df['신규_판매자'], 
+            name="신규 유입", 
+            marker_color='#81C784'
+        ))
+        # 이탈자 (Bar)
+        fig1.add_trace(go.Bar(
+            x=trend_df['월_dt'], 
+            y=trend_df['이탈자'], 
+            name="이탈(마지막 거래)", 
+            marker_color='#E53935'
+        ))
+        
+        fig1.update_layout(
+            barmode='group', 
+            hovermode="x unified", 
+            height=400,
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        )
         st.plotly_chart(fig1, use_container_width=True)
-        st.markdown("**현상**: 막대한 신규 판매자가 쏟아지지만, 이탈자 수도 비례하여 가파르게 상승합니다. 밑 빠진 독에 물 붓기입니다.")
+        st.markdown("**현상**: 신규 유입(초록)이 늘어나는 만큼 이탈자(빨강)도 가파르게 따라붙고 있습니다. 특히 2018년 들어 그 간격이 좁혀지며 '순증' 효과가 미비해지고 있습니다.")
 
     with col2:
         st.subheader("⚠️ 신규 집단 내 '가입 1개월 차 단건 판매' 비중")
@@ -166,38 +217,35 @@ def render_step2(df, seller_profile):
 
         st.markdown("**현상**: 신규 가입자 10명 중 약 4~5명(40~50% 내외)은 **가입 첫 달에 단 1건만 팔고 맙니다.**")
 
-    # 3) 신규 vs 기존 판매자 비율 상세 표 추가
+    # 3) 월별 종합 활동 현황 (신규/기존/이탈/매출)
     st.divider()
-    st.subheader("👥 신규 vs 기존 판매자 비율 상세 현황")
-    st.markdown("매월 활동하는 판매자 중 해당 월에 처음 진입한 '신규'와 이전부터 활동해온 '기존' 판매자의 비중을 상세히 살펴봅니다.")
+    st.subheader("📊 월별 판매자 활동 및 매출 종합 현황")
+    st.markdown("매월 플랫폼 내 판매자 유입, 활동 유지, 이탈 및 그에 따른 매출 기여도를 종합적으로 분석합니다.")
     
-    # 월별 활성 판매자 데이터 준비 (이미 df에 주문월과 가입월이 merge되어 있음)
-    monthly_active_type = df.groupby(['주문월', 'seller_id', '가입월']).size().reset_index()
-    monthly_active_type['seller_type'] = np.where(
-        monthly_active_type['주문월'] == monthly_active_type['가입월'], 
-        '신규', '기존'
-    )
+    # 매출액 데이터 별도 계산 후 병합
+    monthly_rev = df.groupby('주문월')['price'].sum().reset_index().rename(columns={'price': '매출액'})
+    final_monthly_stats = pd.merge(trend_df, monthly_rev, on='주문월')
     
-    type_counts = monthly_active_type.groupby(['주문월', 'seller_type']).size().unstack(fill_value=0).reset_index()
-    type_counts['주문월_str'] = type_counts['주문월'].astype(str)
-    type_counts['합계'] = type_counts['신규'] + type_counts['기존']
-    type_counts['신규 비중 (%)'] = (type_counts['신규'] / type_counts['합계'] * 100).round(1)
+    final_monthly_stats['이탈 비중 (%)'] = (final_monthly_stats['이탈자'] / final_monthly_stats['총_활성_판매자'] * 100).round(1)
+    final_monthly_stats['주문월_str'] = final_monthly_stats['주문월'].astype(str)
     
-    # 필터링 (2017-01 ~ 2018-08 - 분석 집중 구간)
-    type_counts_filtered = type_counts[(type_counts['주문월_str'] >= '2017-01') & (type_counts['주문월_str'] <= '2018-08')]
-    
-    df_type_show = type_counts_filtered[['주문월_str', '합계', '신규', '기존', '신규 비중 (%)']].copy()
-    df_type_show.columns = ['월', '총 활성 판매자', '신규 판매자', '기존 판매자', '신규 비중 (%)']
+    df_final_show = final_monthly_stats[['주문월_str', '매출액', '총_활성_판매자', '신규_판매자', '기존_판매자', '이탈자', '이탈 비중 (%)']].copy()
+    df_final_show.columns = ['월', '매출액 (R$)', '총 활성 판매자', '신규 판매자', '기존 판매자', '이탈자', '이탈 비중 (%)']
     
     st.dataframe(
-        df_type_show.style.format({
+        df_final_show.style.format({
+            '매출액 (R$)': '{:,.0f}',
             '총 활성 판매자': '{:,}',
             '신규 판매자': '{:,}',
             '기존 판매자': '{:,}',
-            '신규 비중 (%)': '{:.1f}%'
-        }).background_gradient(subset=['신규 비중 (%)'], cmap='YlGn'),
+            '이탈자': '{:,}',
+            '이탈 비중 (%)': '{:.1f}%'
+        }).background_gradient(subset=['이탈 비중 (%)'], cmap='OrRd')
+          .background_gradient(subset=['매출액 (R$)'], cmap='Greens'),
         use_container_width=True
     )
+    
+    st.caption("※ 마지막 달(2018-08)은 데이터 수집 종료 시점으로 인해 이탈자 수가 실제보다 높게 나타납니다.")
         
 def render_step3(df, seller_profile):
     st.header("3. 분석 결과 (장기 생존 스위트스팟 파악)")

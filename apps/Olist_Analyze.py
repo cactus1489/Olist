@@ -23,7 +23,7 @@ def main():
         items_with_sellers, _ = load_seller_data()
         df = items_with_sellers[items_with_sellers['order_status'] == 'delivered'].copy()
         
-        # 2018년 8월 31일 이전의 데이터만 유지 (마지막 달 데이터 절단 및 이탈 왜곡 방지)
+        # 2018년 08월 31일 이전의 데이터만 유지 (마지막 달 데이터 절단 및 이탈 왜곡 방지)
         df = df[df['order_purchase_timestamp'] <= '2018-08-31'].copy()
         
         # 기준일(집계 마감일) 계산
@@ -72,7 +72,7 @@ def render_step1(df):
         active_sellers=('seller_id', 'nunique')
     ).reset_index()
     monthly_stats['주문월_dt'] = monthly_stats['주문월'].dt.to_timestamp()
-    # 노이즈를 줄이기 위해 2017년 1월 ~ 2018년 8월 데이터만 사용
+    # 노이즈를 줄이기 위해 2017년 1월 ~ 2018년 08월 데이터만 사용
     monthly_stats = monthly_stats[(monthly_stats['주문월_dt'] >= '2017-01-01') & (monthly_stats['주문월_dt'] <= '2018-08-31')]
 
     # 듀얼축 그래프
